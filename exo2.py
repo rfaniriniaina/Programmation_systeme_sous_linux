@@ -1,29 +1,23 @@
-import os
-import sys
+import threading
+import random
 
-d1 = os.pipe()
-d2 = os.pipe()
+N = 10
 
-pid = os.fork()
+def generate_tab(arg, res_container):
+    tab = []
+    for i in range(N):
+        tab.append(random.randint(0, 99))
+    res_container.append(tab) # On met le tableau dans le conteneur
 
-if pid == 0:
-    os.dup2(d1[1], sys.stdout.fileno()) # redirection stdout vers d1
-    os.dup2(d2[0], sys.stdin.fileno())  # redirection stdin vers d2
-    
-    os.close(d1[0]); os.close(d1[1])
-    os.close(d2[0]); os.close(d2[1])
+n = 5
+result_container = [] # Pour simuler le retour de malloc/pthread_join
 
-    # Simulation de l'envoi au père via stdout
-    mot = "test" 
-    sys.stdout.write(mot + "\n")
-    sys.stdout.flush()
-    sys.exit(0)
+tid = threading.Thread(target=generate_tab, args=(n, result_container))
+tid.start()
+tid.join()
 
-else:
-    os.dup2(d1[0], sys.stdout.fileno())
-    os.dup2(d2[1], sys.stdin.fileno())
-    
-    os.close(d1[0]); os.close(d1[1])
-    os.close(d2[0]); os.close(d2[1])
+result = result_container[0] # On récupère le tableau généré
 
-    os.wait()
+for i in range(N):
+    print(f"{result[i]} ", end="")
+print()
