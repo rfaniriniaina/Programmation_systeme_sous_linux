@@ -1,33 +1,66 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<unistd.h>
+#include<signal.h>
+#include<sys/types.h>
 
-typedef struct
+int main() 
 {
-    int *tab;
-    int taille;
-} Affiche;
+    pid_t pid;
+    char choix;
 
-void *generate_tab(void *arg)
-{
-    Affiche *p = (Affiche *)arg;
-    
-    printf("Tableau : ");
-    for( int i=0 ; i<p->taille ; i++ )
+    pid = fork();
+
+    if (pid < 0) 
     {
-        printf("%d ", p->tab[i]);
+        perror("Erreur");
+        exit(1);
     }
-    printf("\n");
-    return NULL;
-}
 
-int main()
-{
-    int tab[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    pthread_t tid;
-    Affiche p = {tab, 10};
+    if (pid == 0) 
+    {
+        printf("Fils (PID %d) : Début du calcul infini\n", getpid());
+        unsigned long i = 0;
 
-    pthread_create(&tid, NULL, generate_tab, &p);
-    pthread_join(tid, NULL);
+        while (1) 
+        {
+            i++; 
+        }
+    } 
+    else 
+    {
+        do 
+        
+        {
+            printf("s : Endormir le fils (SIGSTOP)\n");
+            printf("r : Redémarrer le fils (SIGCONT)\n");
+            printf("q : Tuer le fils et quitter (SIGKILL)\n");
+            printf("Votre choix : ");
+            
+            scanf(" %c", &choix);
+
+            switch (choix) 
+            {
+                case 's':
+                    if (kill(pid, SIGSTOP) == 0)
+                        printf("Signal SIGSTOP envoyé au fils.\n");
+                    break;
+                case 'r':
+                    if (kill(pid, SIGCONT) == 0)
+                        printf("Signal SIGCONT envoyé au fils.\n");
+                    break;
+                case 'q':
+                    if (kill(pid, SIGKILL) == 0) 
+                    {
+                        printf("Fils éliminé. Fermeture du programme.\n");
+                    }
+                    break;
+                default:
+                    printf("Option invalide.\n");
+            }
+        } 
+        while (choix != 'q');
+    }
+
     return 0;
 }
