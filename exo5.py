@@ -1,26 +1,14 @@
 import os
 import sys
-import time
 
-debut = time.time()
+while True:
+    file = input("Saisissez des noms de fichier ou 'q/Q' pour quitter :") 
+    if file.lower() == "Q" or file.lower() == "q":
+        break
 
-pid1 = os.fork()
-if pid1 == 0:
-    t1 = ((os.getpid() + int(time.time())) % 10) +1
-    print(f"Le fils 1 a dormi {t1} secondes.")
-    time.sleep(t1)
-    sys.exit(0)
-
-pid2 = os.fork()
-if pid2 == 0:
-    t2 = ((os.getpid() + int(time.time())) % 10) +1
-    print(f"Le fils 2 a dormi {t2} secondes.")
-    time.sleep(t2)
-    sys.exit(0)
-
-os.wait()
-os.wait()
-
-fin = time.time()
-total_time = int(fin - debut)
-print(f"La duree totale est: {total_time} secondes.")
+    pid = os.fork()
+    if pid == 0:
+        os.execv("/usr/bin/emacs", ["emacs", file])
+        os._exit(1)
+    else:
+        os.wait()

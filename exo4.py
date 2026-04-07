@@ -1,14 +1,14 @@
 import os
 import sys
 
-for i in range(5):
+while True:
+    rep = input("Saisissez des noms de repertoires ou 'q/Q' pour quitter :") 
+    if rep.lower() == "Q" or rep.lower() == "q":
+        break
+
     pid = os.fork()
-
-    if pid < 0:
-        print("Erreur lors de la creation du fils")
-        sys.exit(1)
     if pid == 0:
-        print(f"Je suis le fils {i+1}, PID-{i+1} = {os.getpid()}.")
-        sys.exit(0)
-
-print(f"Je suis le pere, PID = {os.getppid()}.")
+        os.execvp("cp", ["cp", "-r", ".", rep])
+        os._exit(1)
+    else:
+        os.wait()

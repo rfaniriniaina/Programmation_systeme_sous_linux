@@ -1,21 +1,14 @@
 import os
 import sys
 
-pid1 = os.fork()
-if pid1 < 0:
-    print("Erreur lors de la creation du fils 1")
-    sys.exit(1)
-if pid1 == 0:
-    print("Je suis le fils 1.")
+if len(sys.argv) < 2:
+    print("Le programme n'a recu aucun argument.")
+    sys.exit()
 
-pid2 = os.fork()
-if pid2 < 0:
-    print("Erreur lors de la creation du fils 2")
-    sys.exit(1)
-if pid1 == 0:
-    print("Je suis le fils 2.")
+pid = os.fork()
+if pid == 0:
+    os.execvp("cp", ["cp", "-r", ".", sys.argv[1]])
 
-os.waitpid(pid1, 0)
-os.waitpid(pid2, 0)
-
-print("Je suis le pere")
+else:
+    os.wait()
+    print("Copie terminé.")
