@@ -1,11 +1,10 @@
 
-#include<fcntl.h>
+#include<unistd.h>
 #include<stdio.h>
 #include<stdlib.h>
-#include<string.h>
-#include<sys/stat.h>
+#include<sys/wait.h>
 #include<sys/types.h>
-
+#include<string.h>
 
 int main()
 {
@@ -18,36 +17,44 @@ int main()
     pid_t pid = fork();
     if( pid == 0)
     {
+        dup2(d1[1], STDOUT_FILENO); //redirection stdout vers d1
+        dup2(d2[0], STDIN_FILENO); //redirection stdin vers d2
         close(d1[0]);
+        close(d1[1]);
+        close(d2[0]);
         close(d2[1]);
 
         char mot[100];
         printf("Entrez un mot : ");
         scanf("%s", mot);
 
-        write(d1[1], mot, sizeof(mot)); //envoyer au pere
+        printf("%s", mot); //envoyer au pere via stdout
         int valeurR;
-        read(d2[0], &valeurR, sizeof(valeurR)); //recevoir le resultat
-
-        close(d1[1]);
-        close(d2[0]);
+        scanf("%d", mot);
     }
 
     else
     {
+        dup2(d1[0], STDOUT_FILENO); 
+        dup2(d2[1], STDIN_FILENO); 
+        close(d1[0]);
         close(d1[1]);
-        close(d2[0]);  
+        close(d2[0]);
+        close(d2[1]);
         
-        char mot[100], mot_fichier[100];
-        int found = 0;
-        read(d1[0], mot, sizeof(mot)); //recevoir du fils
+        char mot[100];
+        scanf("%s", mot); //depuis le fils
 
+        
         FILE *fp = fopen("fichier.txt", "r");
         if(fp == NULL)
         {
             printf("Erreur lors de l'ouverture du fichier\n");
             exit(1);
         }
+
+        int found = 0;
+        char mot_fichier[100];
 
         while(fscanf(fp, "%s", mot_fichier) != EOF)
         {
@@ -59,11 +66,8 @@ int main()
         }
 
         fclose(fp);
-
-        write(d2[1], &found, sizeof(found)); //envoyer le resultat au fils
-
-        close(d1[0]);
-        close(d2[1]);
+        printf("%d\n", found);
+        wait(NULL);
     }
     
     return 0;

@@ -21,7 +21,11 @@ int main(int argc, char *argv[])
 
         char fd[20];
         sprintf(fd, "%d", d1); //transforme d1 en texte fd
-        char *args[] = {"./fils", fd, NULL};
+
+        //creation d'une variable d environnement
+        setenv("DESCRIPTEUR", fd, 1); //si elle existe, on l ecrase grace a '1'
+
+        char *args[] = {"./fils_env", NULL};
         execv(args[0], args);
 
         perror("Erreur");

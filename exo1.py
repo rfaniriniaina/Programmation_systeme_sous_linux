@@ -1,24 +1,45 @@
+import os
 import sys
 
-def somme(a, b):
-    resultat = a + b
-    print(f"{a} + {b} = {resultat}")
-    return resultat
+# d1[2] (fils -> pere), d2[2] (pere -> fils)
+d1 = os.pipe() 
+d2 = os.pipe()
 
-def main():
-    if len(sys.argv) <= 2:
-        print("Le programme n'a pas reçu assez d'arguments.")
-        sys.exit(1)
+pid = os.fork()
 
-    try:
-        a = int(sys.argv[1])
-        b = int(sys.argv[2])
-        
-        s = somme(a, b)
-        
-    except ValueError:
-        print("Erreur : Veuillez fournir des nombres entiers en arguments.")
-        sys.exit(1)
+if pid == 0:
+    os.close(d1[0])
+    os.close(d2[1])
 
-if __name__ == "__main__":
-    main()
+    mot = input("Entrez un mot : ")
+    os.write(d1[1], mot.encode()) # envoyer au pere
+
+    # recevoir le resultat (int)
+    res_bytes = os.read(d2[0], 4)
+    valeurR = int.from_bytes(res_bytes, byteorder='little')
+    print(f"Résultat reçu : {valeurR}")
+
+    os.close(d1[1])
+    os.close(d2[0])
+    sys.exit(0)
+
+else:
+    os.close(d1[1])
+    os.close(d2[0])
+
+    mot = os.read(d1[0], 100).decode().strip() # recevoir du fils
+    found = 0
+
+    if os.path.exists("fichier.txt"):
+        with open("fichier.txt", "r") as fp:
+            for mot_fichier in fp.read().split():
+                if mot == mot_fichier:
+                    found = 1
+                    break
+    
+    # envoyer le resultat au fils
+    os.write(d2[1], found.to_bytes(4, byteorder='little'))
+
+    os.close(d1[0])
+    os.close(d2[1])
+    os.wait()
