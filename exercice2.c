@@ -1,37 +1,51 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<pthread.h>
-#include<time.h>
+#include<dirent.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+#include<string.h>
 
-#define N 10
+#define MO (1024*1024)
 
-void *generate_tab(void* arg)
+int main(int argc, char **argv)
 {
-    srand(time(NULL));
-    int *tab = malloc(N * sizeof(int));
+    int i , retour , taille;
+    DIR *dir;
+    struct dirent *contenu;
+    struct stat st;
+    char *chemin;
 
-    for( int i=0 ; i<N ; i++)
+    for(i=1 ; i<argc ; i++)
     {
-        tab[i] = rand() % 100;
+        dir = opendir(argv[i]);
+        if(!dir)
+        {
+            printf("Erreur d'ouverture du dossier %s .\n"  , argv[i]);
+            continue;
+        }
+        contenu  = readdir(dir) ;
+
+        while(contenu != NULL)
+        {
+            taille = strlen(argv[i]) + strlen(contenu->d_name) + 1;
+            chemin = malloc(taille * sizeof(char));
+
+            sprintf(chemin , "%s/%s" , argv[i] , contenu->d_name);
+
+            contenu  = readdir(dir) ;
+            retour = stat(chemin, &st);
+            if(retour != 0)
+            {
+                free(chemin);
+            }
+
+            else if(S_ISREG(st.st_mode) && (st.st_size >= MO))
+            {
+                printf("%s taille=%ldMo UID=%d\n" , chemin , (long)st.st_size / MO , (int)st.st_uid);
+                free(chemin);
+            }
+        }
+        closedir(dir);
     }
-    return tab;
-}
-
-int main()
-{
-    pthread_t tid;
-    int n = 5;
-    int *result;
-
-    pthread_create(&tid, NULL, generate_tab, &n);
-    pthread_join(tid, (void**)&result);
-
-    for( int i=0 ; i<N ; i++ )
-    {
-        printf("%d ", result[i]);
-    }
-    printf("\n");
-    free(result);
-    
-    return 0;
+    return (0);
 }

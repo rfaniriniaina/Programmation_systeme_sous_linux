@@ -1,76 +1,34 @@
 #include<stdio.h>
 #include<stdlib.h>
-#include<pthread.h>
-#include<time.h>
-
-typedef struct{
-    int *tab;
-    int n;
-    int x;    
-} TypeTableau;
-
-void* generate_tab(void* arg);
-void *find(void* arg);
-
-void* generate_tab(void* arg)
-{
-    TypeTableau *t = (TypeTableau*) arg;
-    t->tab = malloc(t->n * sizeof(int));
-
-    srand(time(NULL));
-    for( int i=0 ; i<t->n ; i++ )
-    {
-        t->tab[i] = rand() % 100;
-    }
-    return NULL;
-}
-
-//chercher x dans le tableau
-void *find(void* arg)
-{
-    TypeTableau *t = (TypeTableau*) arg;
-    for( int i=0 ; i<t->n ; i++ )
-    {
-        if( t->tab[i] == t->x )
-        {
-            return (void*)1;
-        }
-    }
-    return (void*)0;
-}
+#include<fcntl.h>
+#include<unistd.h>
 
 int main()
 {
-    pthread_t tid1, tid2;
-    TypeTableau t;
+    int n , i , fd;
+    int *tab;
 
-    printf("Donner la taille du tableau : ");
-    scanf("%d", &t.n);
-    printf("Donner la valeur de x (à rechercher) : ");
-    scanf("%d", &t.x);
+    printf("Nombre d'entiers : ");
+    scanf("%d", &n);
 
-    pthread_create(&tid1, NULL, generate_tab, &t);
-    pthread_join(tid1, NULL);
-
-    printf("Tableau rempli : ");
-    for( int i=0 ; i<t.n ; i++ )
+    tab = malloc(n * sizeof(int));
+    for(i = 0; i < n; i++)
     {
-        printf("%d ", t.tab[i]);
+        printf("tab[%d] = ", i);
+        scanf("%d", &tab[i]);
     }
-    printf("\n");
-
-    void *result;
-    pthread_create(&tid2, NULL, find, &t);
-    pthread_join(tid2, &result);
-    if( result == (void*)1 )
+    fd = open("entiers.bin" , O_WRONLY | O_CREAT | O_TRUNC , 0644); /* rw-r--r-- */
+    if(fd < 0)
     {
-        printf("%d est dans le tableau.\n", t.x);
+        printf("Erreur d ouverture du fichier .\n");
     }
     else
     {
-        printf(" %d n'est pas dans le tableau.\n", t.x);
-    }   
+        write(fd , tab , (n*sizeof(int)) );
+        printf("Ecrit dans entiers.bin .\n");
+    }
 
-    free(t.tab);
-    return 0;
+    close(fd);
+    free(tab);
+    return (0);
 }

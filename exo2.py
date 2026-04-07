@@ -1,23 +1,28 @@
-import threading
-import random
+import os
+import sys
 
-N = 10
+# MO = 1024 * 1024
+MO = 1048576
 
-def generate_tab(arg, res_container):
-    tab = []
-    for i in range(N):
-        tab.append(random.randint(0, 99))
-    res_container.append(tab) # On met le tableau dans le conteneur
+for i in range(1, len(sys.argv)):
+    try:
+        # opendir(argv[i])
+        contenu_liste = os.listdir(sys.argv[i])
+    except OSError:
+        print(f"Erreur d'ouverture du dossier {sys.argv[i]} .")
+        continue
 
-n = 5
-result_container = [] # Pour simuler le retour de malloc/pthread_join
+    for nom_fichier in contenu_liste:
+        # sprintf(chemin , "%s/%s" , ...)
+        chemin = os.path.join(sys.argv[i], nom_fichier)
 
-tid = threading.Thread(target=generate_tab, args=(n, result_container))
-tid.start()
-tid.join()
-
-result = result_container[0] # On récupère le tableau généré
-
-for i in range(N):
-    print(f"{result[i]} ", end="")
-print()
+        try:
+            # stat(chemin, &st)
+            st = os.stat(chemin)
+            
+            # S_ISREG(st.st_mode) et taille >= MO
+            if os.path.isfile(chemin) and st.st_size >= MO:
+                taille_mo = st.st_size // MO
+                print(f"{chemin} taille={taille_mo}Mo UID={st.st_uid}")
+        except OSError:
+            continue
